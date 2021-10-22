@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${projectName}
+---
+#Version for coordinated
+
+#apiVersion: apps/v1
+#kind: Deployment
+#metadata:
+#  name: ${artifactId}
+#  namespace: ${projectName}
+#  labels:
+#    app: ${artifactId}
+#spec:
+#  replicas: 3
+#  selector:
+#    matchLabels:
+#      app: ${artifactId}
+#  template:
+#    metadata:
+#      labels:
+#        app: ${artifactId}
+#    spec:
+#      containers:
+#      - name: ${artifactId}
+#        image: tiparega/${projectName}/${artifactId}:0.0.1-SNAPSHOT
+#        ports:
+#        - containerPort: 8080
+#        - containerPort: 8081
+#        readinessProbe:
+#          tcpSocket:
+#            port: 8081
+#          initialDelaySeconds: 1
+#          periodSeconds: 2
+#        livenessProbe:
+#          tcpSocket:
+#            port: 8081
+#          initialDelaySeconds: 1
+#          periodSeconds: 5
+#        env:
+#        - name: COUNTER_FILE
+#          value: /var/data/counter/counter
+#        volumeMounts:
+#        - mountPath: "/var/data/counter"
+#          name: counterv
+#      volumes:
+#        - name: counterv
+#          persistentVolumeClaim:
+#            claimName: counter-volume-claim
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${artifactId}
+  namespace: ${projectName}
+  labels:
+    app: ${artifactId}
+spec:
+  minReplicas: 1
+  selector:
+    matchLabels:
+      app: ${artifactId}
+  template:
+    metadata:
+      labels:
+        app: ${artifactId}
+    spec:
+      containers:
+      - name: ${artifactId}
+        image: tiparega/${projectName}/${artifactId}:0.0.1-SNAPSHOT
+        ports:
+        - containerPort: 8080
+        - containerPort: 8081
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 1
+          periodSeconds: 1
+        livenessProbe:
+          httpGet:
+            path: /alive
+            port: 8080
+          initialDelaySeconds: 1
+          periodSeconds: 1
+        env:
+        - name: 
+          value: 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${artifactId}
+  namespace: ${projectName}
+spec:
+  type: NodePort
+  selector:
+    app: ${artifactId}
+  ports:
+    - name: service
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+      nodePort: 30080
+    - name: management
+      protocol: TCP
+      port: 81
+      targetPort: 8081
+      nodePort: 30081
+

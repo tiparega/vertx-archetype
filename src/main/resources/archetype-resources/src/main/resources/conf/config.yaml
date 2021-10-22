@@ -1,0 +1,12 @@
+server:
+  port: 8080
+#if (${springConfigServer} == 'true' || ${springConfigServer} == 'yes' || ${springConfigServer} == 'y')
+spring:
+  application:
+    name: ${artifactId}
+  cloud:
+    config:
+      uri: http://localhost:8888
+  profiles:
+    active: local
+#end
