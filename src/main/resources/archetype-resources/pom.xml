@@ -96,7 +96,7 @@
 			<artifactId>vertx-circuit-breaker</artifactId>
 			<version>${symbol_dollar}{vertx.version}</version>
 		</dependency>
-		<dependency><!-- TODO: USE THIS -->
+		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-rx-java2</artifactId>
 			<version>${symbol_dollar}{vertx.version}</version>
