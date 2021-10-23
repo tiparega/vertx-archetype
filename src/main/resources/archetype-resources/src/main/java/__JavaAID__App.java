@@ -1,7 +1,7 @@
 package ${package};
 
 import ${package}.verticle.${JavaAID}Verticle;
-import io.vertx.core.Vertx;
+import io.vertx.reactivex.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.VertxPrometheusOptions;
