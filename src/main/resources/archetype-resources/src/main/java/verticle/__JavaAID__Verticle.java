@@ -10,11 +10,11 @@ import ${package}.config.HealthCheck;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.http.HttpServer;
+import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
-import io.vertx.ext.web.Router;
-import io.vertx.micrometer.PrometheusScrapingHandler;
+import io.vertx.reactivex.ext.web.Router;
+import io.vertx.reactivex.micrometer.PrometheusScrapingHandler;
 import io.vertx.micrometer.backends.BackendRegistries;
 import lombok.extern.log4j.Log4j2;
 
@@ -24,50 +24,46 @@ public class ${JavaAID}Verticle extends AbstractVerticle {
 
 	@Override
 	public void start() {
-		Instant start= Instant.now();
-		#if (${springConfigServer} == 'true' || ${springConfigServer} == 'yes' || ${springConfigServer} == 'y')
+		Instant start = Instant.now();
+#if (${springConfigServer} == 'true' || ${springConfigServer} == 'yes' || ${springConfigServer} == 'y')
 		ConfigUtil.readSpringConfig(vertx, configHandler -> {
-		#else
-		ConfigUtil.readConfig(vertx, configHandler -> {
-		#end
-			if (configHandler.succeeded()) {
-				ConfigUtil config= configHandler.result();
-		
-				HttpServerOptions options = new HttpServerOptions().setLogActivity(true);
-				HttpServer server = vertx.createHttpServer(options);
-		
-				Router router = Router.router(vertx);
-				new ${JavaAID}Api(vertx).getRouter(apiRouter -> {
-					if (apiRouter.succeeded()) {
-						router.route("/api/*")
-								// .consumes("application/json")
-								.produces("application/json").subRouter(apiRouter.result());
-						router.route("/alive").handler(HealthCheck.createLiveness(vertx));
-						router.route("/health").handler(HealthCheck.createReadyness(vertx));
-						router.route("/metrics").handler(PrometheusScrapingHandler.create());
+#else
+		ConfigUtil.readConfig(vertx).subscribe(config -> {
+#end
+			HttpServerOptions options = new HttpServerOptions().setLogActivity(true);
+			HttpServer server = vertx.createHttpServer(options);
 
-						MeterRegistry registry = BackendRegistries.getDefaultNow();
-						new JvmMemoryMetrics().bindTo(registry);
-						new JvmThreadMetrics().bindTo(registry);
+			Router router = Router.router(vertx);
+			new ${JavaAID}Api(vertx).getRouter().subscribe(apiRouter -> {
+				router.route("/api/*")
+						// .consumes("application/json")
+						.produces("application/json").subRouter(apiRouter);
+				router.route("/alive").handler(HealthCheck.createLiveness(vertx));
+				router.route("/health").handler(HealthCheck.createReadyness(vertx));
+				router.route("/metrics").handler(PrometheusScrapingHandler.create());
 
-						router.route().handler(routingContext -> {
-							routingContext.fail(Constants.HTTP_RESPONSE_NOT_FOUND);
-						});
+				MeterRegistry registry = BackendRegistries.getDefaultNow();
+				new JvmMemoryMetrics().bindTo(registry);
+				new JvmThreadMetrics().bindTo(registry);
 
-						server.requestHandler(router).exceptionHandler(e -> {
-							log.error("Unhandled error", e);
-						}).listen(config.getInteger(Constants.PROP_SERVER_PORT), listening -> {
-							serverPort = server.actualPort();
-							log.info("Server started on port " + serverPort + " in "
-									+ (Instant.now().toEpochMilli() - start.toEpochMilli()) + " milliseconds");
-						});
-					} else {
-						log.error("Error configuring API", apiRouter.cause());
-					}
+				router.route().handler(routingContext -> {
+					routingContext.fail(Constants.HTTP_RESPONSE_NOT_FOUND);
 				});
-			} else {
-				log.error("Error retrieving configuration", configHandler.cause());
-			}
+
+				server.requestHandler(router).exceptionHandler(e -> {
+					log.error("Unhandled error", e);
+				}).rxListen(config.getInteger(Constants.PROP_SERVER_PORT)).subscribe(listening -> {
+					serverPort = server.actualPort();
+					log.info("Server started on port " + serverPort + " in "
+							+ (Instant.now().toEpochMilli() - start.toEpochMilli()) + " milliseconds");
+				}, err -> {
+					log.error("Error starting server" + err);
+				});
+			}, err -> {
+				log.error("Error configuring API", err);
+			});
+		}, err -> {
+			log.error("Error retrieving configuration", err);
 		});
 	}
 	

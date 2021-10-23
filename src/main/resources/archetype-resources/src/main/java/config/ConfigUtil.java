@@ -4,18 +4,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Map.Entry;
+import java.util.Random;
 
+import io.reactivex.Single;
+import io.reactivex.SingleEmitter;
+import io.reactivex.SingleOnSubscribe;
 import io.vertx.config.ConfigChange;
-import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.reactivex.config.ConfigRetriever;
+import io.vertx.reactivex.core.Vertx;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -23,9 +24,9 @@ public class ConfigUtil {
 	private static ConfigUtil instance;
 	private static final long UPDATE_TIME = 15000L;
 	private JsonObject json;
-	private Map<String,List<Handler<? extends Object>>> listeners;
+	private Map<String, List<Handler<? extends Object>>> listeners; //TODO: Change to Observable/Maybe/Completable
 	private ConfigUtil baseConf;
-	
+
 	private ConfigUtil(JsonObject json) {
 		this.json= json;
 		listeners= new HashMap<>();
@@ -36,18 +37,23 @@ public class ConfigUtil {
 		this.baseConf= baseConf;
 	}
 
-	public static void readConfig(Vertx vertx, Handler<AsyncResult<ConfigUtil>> handler) {
-		ConfigRetrieverOptions options= new ConfigRetrieverOptions()
-				.setScanPeriod(UPDATE_TIME);
-		getLocalStores().forEach(options::addStore);
-		ConfigRetriever retriever = ConfigRetriever.create(vertx, options);
-		retriever.getConfig(retrieved -> {
-			handler.handle(retrieved.map(json -> {
-				ConfigUtil configUtil= new ConfigUtil(json);
-				instance= configUtil;
-				retriever.listen(configUtil::onChange);
-				return configUtil;
-			}));
+	public static Single<ConfigUtil> readConfig(Vertx vertx) {
+		return Single.<ConfigUtil>create(new SingleOnSubscribe<ConfigUtil>() {
+
+			@Override
+			public void subscribe(SingleEmitter<ConfigUtil> emitter) throws Exception {
+				ConfigRetrieverOptions options = new ConfigRetrieverOptions().setScanPeriod(UPDATE_TIME);
+				getLocalStores().forEach(options::addStore);
+				ConfigRetriever retriever = ConfigRetriever.create(vertx, options);
+				retriever.rxGetConfig().subscribe(retrieved -> {
+					ConfigUtil configUtil = new ConfigUtil(retrieved);
+					instance = configUtil;
+					retriever.listen(configUtil::onChange);
+					emitter.onSuccess(configUtil);
+				}, err -> {
+					emitter.onError(err);
+				});
+			}
 		});
 	}
 
@@ -108,46 +114,47 @@ public class ConfigUtil {
 	 * @param vertx
 	 * @param handler
 	 */
-	public static void readSpringConfig(Vertx vertx, Handler<AsyncResult<ConfigUtil>> handler) {
-		//First read local config
-		readConfig(vertx, localConfHandler -> {
-			if (localConfHandler.succeeded()) {
-				ConfigUtil localConf= localConfHandler.result();
-				String name= localConf.getString("spring.application.name");
-				String uri= localConf.getString("spring.cloud.config.uri");
-				String profile= localConf.getString("spring.profiles.active");
-				if (profile != null) {
-					profile= profile.split(",")[0];
-				}
-				String fullUri= uri + "/" + name + "/" + profile;
-				if (uri == null || name == null || profile == null) {
-					//Fallback
-					log.error("Can't load Spring Config from " + fullUri);
-					handler.handle(Future.succeededFuture(localConf));
-				} else {
-					//If we have an uri, we call Spring Config Server
-					log.info("Retrieving Spring Config from " + fullUri);
-					ConfigStoreOptions springConfigStore = new ConfigStoreOptions()
-						    .setType("spring-config-server")
-						    .setConfig(new JsonObject().put("url", fullUri));
-					ConfigRetrieverOptions options= new ConfigRetrieverOptions()
-							.setScanPeriod(UPDATE_TIME)
-							.addStore(springConfigStore);
-					ConfigRetriever retriever = ConfigRetriever.create(vertx, options);
-					retriever.getConfig(retrieved -> {
-						handler.handle(retrieved.map(springConfig -> {
-							springConfig= propertiesToJson(springConfig);
-							//Create new ConfigUtil with local as base
-							ConfigUtil configUtil= new ConfigUtil(localConf, springConfig);
+	public static Single<ConfigUtil> readSpringConfig(Vertx vertx) {
+
+		return Single.<ConfigUtil>create(new SingleOnSubscribe<ConfigUtil>() {
+
+			@Override
+			public void subscribe(SingleEmitter<ConfigUtil> emitter) throws Exception {
+				// First read local config
+				readConfig(vertx).subscribe(localConfHandler -> {
+					ConfigUtil localConf = localConfHandler;
+					String name = localConf.getString("spring.application.name");
+					String uri = localConf.getString("spring.cloud.config.uri");
+					String profile = localConf.getString("spring.profiles.active");
+					if (profile != null) {
+						profile = profile.split(",")[0];
+					}
+					String fullUri = uri + "/" + name + "/" + profile;
+					if (uri == null || name == null || profile == null) {
+						// Fallback
+						log.error("Can't load Spring Config from " + fullUri);
+						emitter.onSuccess(localConf);
+					} else {
+						// If we have an uri, we call Spring Config Server
+						log.info("Retrieving Spring Config from " + fullUri);
+						ConfigStoreOptions springConfigStore = new ConfigStoreOptions().setType("spring-config-server")
+								.setConfig(new JsonObject().put("url", fullUri));
+						ConfigRetrieverOptions options = new ConfigRetrieverOptions().setScanPeriod(UPDATE_TIME)
+								.addStore(springConfigStore);
+						ConfigRetriever retriever = ConfigRetriever.create(vertx, options);
+						retriever.rxGetConfig().subscribe(springConfig -> {
+							springConfig = propertiesToJson(springConfig);
+							// Create new ConfigUtil with local as base
+							ConfigUtil configUtil = new ConfigUtil(localConf, springConfig);
 							resolvePlaceHolders(configUtil);
-							instance= configUtil;
+							instance = configUtil;
 							retriever.listen(configUtil::onChange);
-							return configUtil;
-						}));
-					});
-				}
-			} else {
-				handler.handle(Future.failedFuture(localConfHandler.cause()));
+							emitter.onSuccess(configUtil);
+						});
+					}
+				}, err -> {
+					emitter.onError(err);
+				});
 			}
 		});
 	}

@@ -1,8 +1,8 @@
 package ${package}.config;
 
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
-import io.vertx.ext.healthchecks.HealthCheckHandler;
+import io.vertx.reactivex.core.Promise;
+import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.ext.healthchecks.HealthCheckHandler;
 import io.vertx.ext.healthchecks.Status;
 
 public class HealthCheck {
