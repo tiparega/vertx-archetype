@@ -1,11 +1,18 @@
 package ${package}.api;
 
+#if (${openApi} == 'true' || ${openApi} == 'yes' || ${openApi} == 'y')
+import ${package}.api.model.Category;
+import ${package}.api.model.Pet;
+#end
 import ${package}.config.Constants;
 
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
 import io.reactivex.SingleOnSubscribe;
+import io.vertx.core.json.Json;
+#if (${openApi} != 'true' && ${openApi} != 'yes' && ${openApi} != 'y')
 import io.vertx.core.json.JsonObject;
+#end
 import io.vertx.ext.web.openapi.RouterBuilderOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.core.http.HttpServerResponse;
@@ -41,7 +48,13 @@ public class ${JavaAID}Api {
 
 	private void action(RoutingContext routingContext) {
 		HttpServerResponse response = routingContext.response();
+#if (${openApi} == 'true' || ${openApi} == 'yes' || ${openApi} == 'y')
+		Pet pet = new Pet().id(Long.valueOf(routingContext.pathParam("petId"))).name("Test")
+				.category(new Category().id(1L).name("Pojo"));
+		response.end(Json.encode(pet));
+#else
 		response.end(new JsonObject().put("petId", routingContext.pathParam("petId")).encode());
+#end
 	}
 
 	private void error(RoutingContext routingContext) {

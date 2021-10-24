@@ -38,6 +38,12 @@
 		<requiredProperty key="springConfigServer">
 			<defaultValue>false</defaultValue>
 		</requiredProperty>
+		<requiredProperty key="openApi">
+			<defaultValue>true</defaultValue>
+		</requiredProperty>
+		<requiredProperty key="genApi">
+			<defaultValue>false</defaultValue>
+		</requiredProperty>
 		<requiredProperty key="vertxVersion">
 			<defaultValue>4.1.4</defaultValue>
 		</requiredProperty>

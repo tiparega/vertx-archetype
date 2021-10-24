@@ -122,6 +122,24 @@
 			<artifactId>log4j-layout-template-json</artifactId>
 			<version>${symbol_dollar}{log4j.version}</version>
 		</dependency>
+#if (${openApi} == 'true' || ${openApi} == 'yes' || ${openApi} == 'y')
+		<dependency>
+			<groupId>com.google.code.findbugs</groupId>
+			<artifactId>jsr305</artifactId>
+			<version>3.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>io.swagger.parser.v3</groupId>
+			<artifactId>swagger-parser</artifactId>
+			<version>2.0.28</version>
+		</dependency>
+		<dependency>
+			<!-- Needed for java.annotation.Generated in Java 11 -->
+			<groupId>javax.annotation</groupId>
+			<artifactId>javax.annotation-api</artifactId>
+			<version>1.3.2</version>
+		</dependency>
+#end
 	</dependencies>
 
 	<build>
@@ -170,6 +188,45 @@
 					</buildArgs>
 				</configuration>
 			</plugin>
+#if (${openApi} == 'true' || ${openApi} == 'yes' || ${openApi} == 'y')
+			<plugin>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+				<!-- RELEASE_VERSION -->
+				<version>5.1.0</version>
+				<!-- /RELEASE_VERSION -->
+				<executions>
+					<execution>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${symbol_dollar}{project.basedir}/src/main/resources/api.yaml</inputSpec>
+							<generatorName>java</generatorName>
+							<modelPackage>${package}.api.model</modelPackage>
+							<generateModelDocumentation>false</generateModelDocumentation>
+							<generateApiDocumentation>false</generateApiDocumentation>
+#if (${genApi} == 'true' || ${genApi} == 'yes' || ${genApi} == 'y')
+							<!-- API should only be there for clients -->
+							<generateApis>true</generateApis>
+							<generateSupportingFiles>true</generateSupportingFiles>
+							<apiPackage>${package}.api.client</apiPackage>
+#else
+							<generateApis>false</generateApis>
+							<generateSupportingFiles>false</generateSupportingFiles>
+#end
+							<generateModelTests>false</generateModelTests>
+							<configOptions>
+								<sourceFolder>src/gen/java/main</sourceFolder>
+								<java8>true</java8>
+								<dateLibrary>java8</dateLibrary>
+								<library>vertx</library>
+							</configOptions>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+#end
 		</plugins>
 	</build>
 </project>
