@@ -319,9 +319,9 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
-	public void getStringAndListen(String key, Handler<String> setter) {
+	public String getStringAndListen(String key, Handler<String> setter) {
 		listen(key,setter);
-		setter.handle((String) getObject(key));
+		return (String) getObject(key);
 	}
 	
 	/**
@@ -338,9 +338,9 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
-	public void getIntegerAndListen(String key, Handler<Integer> setter) {
+	public Integer getIntegerAndListen(String key, Handler<Integer> setter) {
 		listen(key,setter);
-		setter.handle((Integer) getObject(key));
+		return (Integer) getObject(key);
 	}
 	
 	/**
@@ -361,9 +361,9 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
-	public void getIntegerAndListen(String key, Integer defaultValue, Handler<Integer> setter) {
+	public Integer getIntegerAndListen(String key, Integer defaultValue, Handler<Integer> setter) {
 		listen(key,setter);
-		setter.handle(getInteger(key, defaultValue));
+		return getInteger(key, defaultValue);
 	}
 	
 	/**
@@ -380,9 +380,9 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
-	public void getBooleanAndListen(String key, Handler<Boolean> setter) {
+	public Boolean getBooleanAndListen(String key, Handler<Boolean> setter) {
 		listen(key,setter);
-		setter.handle((Boolean) getObject(key));
+		return (Boolean) getObject(key);
 	}
 	
 	/**
@@ -399,9 +399,9 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
-	public void getFloatAndListen(String key, Handler<Float> setter) {
+	public Float getFloatAndListen(String key, Handler<Float> setter) {
 		listen(key,setter);
-		setter.handle((Float) getObject(key));
+		return (Float) getObject(key);
 	}
 	
 	/**
@@ -418,9 +418,9 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
-	public void getDoubleAndListen(String key, Handler<Double> setter) {
+	public Double getDoubleAndListen(String key, Handler<Double> setter) {
 		listen(key,setter);
-		setter.handle((Double) getObject(key));
+		return (Double) getObject(key);
 	}
 	
 	/**
@@ -444,9 +444,9 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
-	public void getObjectAndListen(String key, Handler<Object> setter) {
+	public Object getObjectAndListen(String key, Handler<Object> setter) {
 		listen(key,setter);
-		setter.handle(getObject(key));
+		return getObject(key);
 	}
 	
 	/**
