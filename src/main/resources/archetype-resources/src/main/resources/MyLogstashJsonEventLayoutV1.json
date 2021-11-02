@@ -2,26 +2,6 @@
   "mdc": {
     "$resolver": "mdc"
   },
-  "exception": {
-    "exception_class": {
-      "$resolver": "exception",
-      "field": "className"
-    },
-    "exception_message": {
-      "$resolver": "exception",
-      "field": "message",
-	  "stackTrace": {
-	    "stringified": true
-	  }
-    },
-    "stacktrace": {
-      "$resolver": "exception",
-      "field": "stackTrace",
-	  "stackTrace": {
-	    "stringified": true
-	  }
-    }
-  },
   "line_number": {
     "$resolver": "source",
     "field": "lineNumber"
@@ -60,5 +40,25 @@
   "logger_name": {
     "$resolver": "logger",
     "field": "name"
+  },
+  "exception": {
+    "exception_class": {
+      "$resolver": "exception",
+      "field": "className"
+    },
+    "exception_message": {
+      "$resolver": "exception",
+      "field": "message",
+	  "stackTrace": {
+	    "stringified": true
+	  }
+    },
+    "stacktrace": {
+      "$resolver": "exception",
+      "field": "stackTrace",
+	  "stackTrace": {
+	    "stringified": true
+	  }
+    }
   }
 }

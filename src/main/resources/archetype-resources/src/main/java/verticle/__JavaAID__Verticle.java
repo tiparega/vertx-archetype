@@ -2,10 +2,13 @@ package ${package}.verticle;
 
 import java.time.Instant;
 
+import com.tiparega.hyperqueue.queuehandler.log.JOM;
+
 import ${package}.api.${JavaAID}Api;
 import ${package}.config.ConfigUtil;
 import ${package}.config.Constants;
 import ${package}.config.HealthCheck;
+import ${package}.log.JOM;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
@@ -19,7 +22,8 @@ import io.vertx.micrometer.backends.BackendRegistries;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class ${JavaAID}Verticle extends AbstractVerticle {
+public class $ {
+	JavaAID}Verticle extends AbstractVerticle{
 	private int serverPort;
 
 	@Override
@@ -54,8 +58,8 @@ public class ${JavaAID}Verticle extends AbstractVerticle {
 					log.error("Unhandled error", e);
 				}).rxListen(config.getInteger(Constants.PROP_SERVER_PORT)).subscribe(listening -> {
 					serverPort = server.actualPort();
-					log.info("Server started on port " + serverPort + " in "
-							+ (Instant.now().toEpochMilli() - start.toEpochMilli()) + " milliseconds");
+					log.info(new JOM("Server started", JOM.T("port", serverPort),
+							JOM.T("millisToStart", Instant.now().toEpochMilli() - start.toEpochMilli())));
 				}, err -> {
 					log.error("Error starting server" + err);
 				});
@@ -66,7 +70,7 @@ public class ${JavaAID}Verticle extends AbstractVerticle {
 			log.error("Error retrieving configuration", err);
 		});
 	}
-	
+
 	@Override
 	public void stop() {
 	}

@@ -5,6 +5,7 @@ import ${package}.api.model.Category;
 import ${package}.api.model.Pet;
 #end
 import ${package}.config.Constants;
+import ${package}.log.JOM;
 
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
@@ -52,6 +53,7 @@ public class ${JavaAID}Api {
 		Pet pet = new Pet().id(Long.valueOf(routingContext.pathParam("petId"))).name("Test")
 				.category(new Category().id(1L).name("Pojo"));
 		response.end(Json.encode(pet));
+		log.debug(new JOM("Returning value", JOM.T("pet", pet)));
 #else
 		response.end(new JsonObject().put("petId", routingContext.pathParam("petId")).encode());
 #end
