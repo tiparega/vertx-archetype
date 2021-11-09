@@ -17,6 +17,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.config.ConfigRetriever;
 import io.vertx.reactivex.core.Vertx;
+import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -25,11 +26,13 @@ public class ConfigUtil {
 	private static final long UPDATE_TIME = 15000L;
 	private JsonObject json;
 	private Map<String, List<Handler<? extends Object>>> listeners; //TODO: Change to Observable/Maybe/Completable
+	private Map<Handler<? extends Object>, Object> defaults;
 	private ConfigUtil baseConf;
 
 	private ConfigUtil(JsonObject json) {
 		this.json= json;
 		listeners= new HashMap<>();
+		defaults= new HashMap<>();
 	}
 
 	public ConfigUtil(ConfigUtil baseConf, JsonObject springConfig) {
@@ -292,6 +295,10 @@ public class ConfigUtil {
 								className= className.substring(0, iDollar);
 							}
 						}
+						if (newValue == null) {
+							// No need to check if exists. If not, newValue will be null anyway
+							newValue= defaults.get(handler);
+						}
 						log.info("Value of " + key + " changed to " + className);
 						handler.handle(newValue);
 					}
@@ -319,9 +326,26 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
+	public String getString(String key, String defaultValue) {
+		return (String) getObject(key, defaultValue);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
 	public String getStringAndListen(String key, Handler<String> setter) {
-		listen(key,setter);
-		return (String) getObject(key);
+		return (String) getObjectAndListen(key, setter);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
+	public String getStringAndListen(String key, String defaultValue, Handler<String> setter) {
+		return (String) getObjectAndListen(key, setter, defaultValue);
 	}
 	
 	/**
@@ -338,9 +362,17 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
+	public int getInteger(String key, int defaultValue) {
+		return (Integer) getObject(key, defaultValue);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
 	public Integer getIntegerAndListen(String key, Handler<Integer> setter) {
-		listen(key,setter);
-		return (Integer) getObject(key);
+		return (Integer) getObjectAndListen(key, setter);
 	}
 	
 	/**
@@ -348,12 +380,8 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
-	public int getInteger(String key, Integer defaultValue) {
-		Integer configured= (Integer) getObject(key);
-		if (configured == null) {
-			return defaultValue;
-		}
-		return configured;
+	public int getIntegerAndListen(String key, int defaultValue, Handler<Integer> setter) {
+		return (Integer) getObjectAndListen(key, setter, defaultValue);
 	}
 	
 	/**
@@ -361,9 +389,35 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
-	public Integer getIntegerAndListen(String key, Integer defaultValue, Handler<Integer> setter) {
-		listen(key,setter);
-		return getInteger(key, defaultValue);
+	public Long getLong(String key) {
+		return (Long) getObject(key);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
+	public long getLong(String key, long defaultValue) {
+		return (Long) getObject(key, defaultValue);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
+	public Long getLongAndListen(String key, Handler<Long> setter) {
+		return (Long) getObjectAndListen(key, setter);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
+	public long getLongAndListen(String key, long defaultValue, Handler<Long> setter) {
+		return (Long) getObjectAndListen(key, setter, defaultValue);
 	}
 	
 	/**
@@ -380,9 +434,26 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
+	public boolean getBoolean(String key, boolean defaultValue) {
+		return (Boolean) getObject(key, defaultValue);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
 	public Boolean getBooleanAndListen(String key, Handler<Boolean> setter) {
-		listen(key,setter);
-		return (Boolean) getObject(key);
+		return (Boolean) getObjectAndListen(key, setter);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
+	public boolean getBooleanAndListen(String key, boolean defaultValue, Handler<Boolean> setter) {
+		return (Boolean) getObjectAndListen(key, setter, defaultValue);
 	}
 	
 	/**
@@ -399,9 +470,26 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
+	public float getFloat(String key, float defaultValue) {
+		return (Float) getObject(key, defaultValue);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
 	public Float getFloatAndListen(String key, Handler<Float> setter) {
-		listen(key,setter);
-		return (Float) getObject(key);
+		return (Float) getObjectAndListen(key, setter);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
+	public float getFloatAndListen(String key, float defaultValue, Handler<Float> setter) {
+		return (Float) getObjectAndListen(key, setter, defaultValue);
 	}
 	
 	/**
@@ -418,9 +506,26 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
+	public double getDouble(String key, double defaultValue) {
+		return (Double) getObject(key, defaultValue);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
 	public Double getDoubleAndListen(String key, Handler<Double> setter) {
-		listen(key,setter);
-		return (Double) getObject(key);
+		return (Double) getObjectAndListen(key, setter);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
+	public double getDoubleAndListen(String key, double defaultValue, Handler<Double> setter) {
+		return (Double) getObjectAndListen(key, setter, defaultValue);
 	}
 	
 	/**
@@ -444,9 +549,38 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
-	public Object getObjectAndListen(String key, Handler<Object> setter) {
+	@SuppressWarnings("unchecked")
+	public <T extends Object> T getObject(String key, T defaultValue) {
+		T obj= (T) getObject(key, json);
+		if (obj == null && baseConf != null) {
+			obj= (T) baseConf.getObject(key);
+		}
+		if (obj == null) {
+			obj= defaultValue;
+		}
+		return obj;
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
+	public Object getObjectAndListen(String key, Handler<? extends Object> setter) {
 		listen(key,setter);
 		return getObject(key);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
+	public <T extends Object> T getObjectAndListen(String key, Handler<T> setter, T defaultValue) {
+		defaults.put(setter,defaultValue);
+		listen(key,setter);
+		T o= (T) getObject(key, defaultValue);
+		return o;
 	}
 	
 	/**
@@ -463,9 +597,26 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
-	public void getJsonObjectAndListen(String key, Handler<JsonObject> setter) {
-		listen(key,setter);
-		setter.handle((JsonObject) getObject(key));
+	public JsonObject getJsonObject(String key, @NonNull JsonObject defaultValue) {
+		return (JsonObject) getObject(key, defaultValue);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
+	public JsonObject getJsonObjectAndListen(String key, Handler<JsonObject> setter) {
+		return (JsonObject) getObject(key, setter);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
+	public JsonObject getJsonObjectAndListen(String key, @NonNull JsonObject defaultValue, Handler<JsonObject> setter) {
+		return (JsonObject) getObjectAndListen(key, setter, defaultValue);
 	}
 	
 	/**
@@ -482,11 +633,43 @@ public class ConfigUtil {
 	 * @param key separated by . Can't use [] for arrays.
 	 * @return
 	 */
-	public <T> void mapToAndListen(String key, Class<T> classT, Handler<T> setter) {
+	public <T> T mapTo(String key, Class<T> classT, @NonNull T defaultValue) {
+		Object obj= getObject(key);
+		T retObj;
+		if (obj == null) {
+			retObj= defaultValue;
+		} else {
+			retObj= ((JsonObject) obj).mapTo(classT);
+		}
+		return retObj;
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
+	public <T> T mapToAndListen(String key, Class<T> classT, Handler<T> setter) {
 		listen(key,handler -> {
 			setter.handle(((JsonObject) handler).mapTo(classT));
 		});
-		setter.handle(mapTo(key, classT));
+		return mapTo(key, classT);
+	}
+	
+	/**
+	 * Gets a configuration parameter from all sources, with preference for environment properties.
+	 * @param key separated by . Can't use [] for arrays.
+	 * @return
+	 */
+	public <T> T mapToAndListen(String key, Class<T> classT, Handler<T> setter, @NonNull T defaultValue) {
+		listen(key,handler -> {
+			if (handler == null) {
+				setter.handle(defaultValue);
+			} else {
+				setter.handle(((JsonObject) handler).mapTo(classT));
+			}
+		});
+		return mapTo(key, classT, defaultValue);
 	}
 	
 	/**
